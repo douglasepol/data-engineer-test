@@ -93,3 +93,40 @@ To run the data ingestion script and load the GDP data into the PostgreSQL datab
 
 ```sh
 python data_ingestion.py
+```
+
+
+### SQL Query for Pivoted Report
+
+Run the following SQL query to generate a pivoted report of the GDP data for the last five years, rounded to two decimal points and presented in billions of USD:
+
+```sql
+SELECT 
+    c.id,
+    c.name,
+    c.iso3_code,
+    ROUND(CAST(COALESCE(MAX(CASE WHEN g.year = 2019 THEN g.value END) / 1e9, 0) AS numeric), 2) AS "2019",
+    ROUND(CAST(COALESCE(MAX(CASE WHEN g.year = 2020 THEN g.value END) / 1e9, 0) AS numeric), 2) AS "2020",
+    ROUND(CAST(COALESCE(MAX(CASE WHEN g.year = 2021 THEN g.value END) / 1e9, 0) AS numeric), 2) AS "2021",
+    ROUND(CAST(COALESCE(MAX(CASE WHEN g.year = 2022 THEN g.value END) / 1e9, 0) AS numeric), 2) AS "2022",
+    ROUND(CAST(COALESCE(MAX(CASE WHEN g.year = 2023 THEN g.value END) / 1e9, 0) AS numeric), 2) AS "2023"
+FROM 
+    country c
+LEFT JOIN 
+    gdp g ON c.id = g.country_id
+GROUP BY 
+    c.id, c.name, c.iso3_code
+ORDER BY 
+    c.name;
+```
+
+### Assumptions and Design Decisions
+
+- The country table is populated with unique country codes (iso3_code) to avoid duplicate entries.
+- The gdp table stores the GDP values, linked to the corresponding country by country_id.
+- The data ingestion script handles missing GDP values by skipping entries with None values.
+- The pivoted report rounds GDP values to two decimal points and converts them to billions of USD for better readability.
+
+## Conclusion
+This project demonstrates a complete data ingestion pipeline from data extraction to database loading and querying. The provided setup and usage instructions should help you replicate the process and generate the desired reports.
+
